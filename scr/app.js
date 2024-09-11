@@ -5,8 +5,6 @@ import UsersRouter from './routes/users.router.js';
 import charactersRouter from './routes/characters.router.js'
 import itemsRouter from './routes/items.router.js'
 
-
-
 const app = express();
 const PORT = 3333;
 

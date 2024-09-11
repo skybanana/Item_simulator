@@ -1,6 +1,7 @@
 import express from 'express';
 import { prisma } from '../utils/prisma/index.js';
 import authMiddleware from '../middlewares/auth.middleware.js';
+import authMiddleware2 from '../middlewares/auth.middleware2.js';
 import validSchema from '../utils/joi/valid.schema.js'
 
 const router = express.Router();
@@ -43,19 +44,24 @@ router.post('/chars', authMiddleware, async (req, res, next) => {
 router.post('/delchars/:charId', authMiddleware, async (req, res, next) => {
     try{
         const { charId } = req.params;
+        const { userTag } = req.user;
         const char = await prisma.characters.findFirst({
             where: {
                 charId: +charId,
             },
             select:{
+                userTag: true,
                 charId: true
             }
         });
         if(char==null){
             return res.status(404).json({ message: '존재하지 않는 캐릭터입니다.' });
         }
+        if(char.userTag != userTag){
+            return res.status(401).json({ message: '접근 권한이 없는 캐릭터입니다.' });
+        }
 
-        const delChar = await prisma.characters.delete({
+        await prisma.characters.delete({
             where: {
                 charId: +charId,
             },
@@ -68,24 +74,26 @@ router.post('/delchars/:charId', authMiddleware, async (req, res, next) => {
 });
 
 /** 캐릭터 조회 API **/
-router.get('/chars/:charId', authMiddleware, async (req, res, next) => {
+router.get('/chars/:charId', authMiddleware2, async (req, res, next) => {
     try{
         const { charId } = req.params;
+        const { userTag } = req.user;
         const char = await prisma.characters.findFirst({
             where: {
                 charId: +charId,
             },
             select: {
+            userTag: true,
             name: true,
             health: true,
             power: true,
             money: true
             },
         });
-        if(char==null){
+        if(char==null)
             return res.status(404).json({ message: '존재하지 않는 캐릭터입니다.' });
-        }
-
+        if(char.userTag != userTag)
+            delete char.money
         return res.status(201).json({ data: char });
     } catch(error){
         next(error)
