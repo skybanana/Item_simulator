@@ -39,6 +39,9 @@ export default function (err, req, res, next) {
     case 'SyntaxError':
       return res.status(400).json({ errorMessage: "요청한 데이터 형식이 올바르지 않습니다" });
 
+    case 'PrismaClientKnownRequestError':
+      return res.status(400).json({ errorMessage: "중복된 장비 사용은 불가합니다." });
+
     default:
       // 그 외의 에러가 발생하면, 서버 에러로 처리합니다.
       return res

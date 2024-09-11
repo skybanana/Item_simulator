@@ -11,7 +11,6 @@ generator client {
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
-  env_file = "../.env"
 }
 
 model Users {
@@ -69,11 +68,12 @@ model Inventory {
 
 model Gears {
   itemId   Int       @map("itemId")
-  charId   Int       @unique @map("charId")
+  charId   Int       @map("charId")
   equip    Boolean   @default(false) @map("equip")
 
   items      Items         @relation(fields: [itemId], references: [itemId], onDelete: Cascade)
   characters Characters    @relation(fields: [charId], references: [charId], onDelete: Cascade)
 
+  @@unique([itemId, charId])
   @@map("Gears")
 }
