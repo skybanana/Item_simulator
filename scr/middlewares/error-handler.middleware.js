@@ -1,0 +1,33 @@
+export default function (err, req, res, next) {
+  console.error(err);
+  let errorMessage = ''
+  let status = 500
+
+  // Joi 검증에서 에러가 발생하면, 클라이언트에게 에러 메시지를 전달합니다.
+  switch(err.name){
+    case 'ValidationError':
+      status = 412
+
+      switch(err.message.match(/(?<=\").+?(?=\")/)[0]){
+        case 'userId':
+          errorMessage = "닉네임의 형식이 일치하지 않습니다."
+          break;
+        case 'password':
+          errorMessage = "패스워드 형식이 일치하지 않습니다."
+          break;
+        default:
+          errorMessage = "요청한 데이터 형식이 올바르지 않습니다."
+          status = 400
+      }
+      return res.status(status).json({ errorMessage: errorMessage });
+
+    case 'SyntaxError':
+      return res.status(400).json({ errorMessage: "요청한 데이터 형식이 올바르지 않습니다" });
+
+    default:
+      // 그 외의 에러가 발생하면, 서버 에러로 처리합니다.
+      return res
+        .status(500)
+        .json({ errorMessage: '서버에서 에러가 발생하였습니다.' });
+  }
+}
