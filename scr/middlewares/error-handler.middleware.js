@@ -18,11 +18,8 @@ export default function (err, req, res, next) {
         case 'name':
           errorMessage = "이름 형식이 일치하지 않습니다. (2~15자리 특수문자 포함불가)"
           break;
-        case 'health':
-          errorMessage = "health 형식이 일치하지 않습니다. ( <1000)"
-          break;
-        case 'power':
-          errorMessage = "power 형식이 일치하지 않습니다. ( <1000)"
+        case 'state':
+          errorMessage = "state 형식이 일치하지 않습니다."
           break;
         case 'price':
           errorMessage = "가격 형식이 일치하지 않습니다. ( <10,000)"
