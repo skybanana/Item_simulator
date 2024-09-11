@@ -6,9 +6,11 @@ import validSchema from '../utils/joi/valid.schema.js'
 const router = express.Router();
 
 /** 아이템 구매 API **/
-router.post('/buy/:itemId/:userTag', async (req, res, next) => {
+router.post('/buy/:charId', authMiddleware, async (req, res, next) => {
     try{
-        const { itemId, userTag } = req.body;
+        const { charId } = req.params;
+        const { itemId, count} = req.body;
+        const { userTag } = req.user;
         
         // 아이템 존재 확인
         const item = await prisma.items.findUnique({
@@ -17,12 +19,29 @@ router.post('/buy/:itemId/:userTag', async (req, res, next) => {
         });
         if(item==null)
             return res.status(404).json({ message: '존재하지 않는 아이템입니다.'});
+
+        const char = await prisma.characters.findFirst({
+            where: { charId: +charId },
+            select: { 
+                userTag: true,
+                money: true 
+            }
+        });
+        if(char==null)
+            return res.status(404).json({ message: '존재하지 않는 캐릭터입니다.' });
+        if(char.userTag != userTag)
+            return res.status(404).json({ message: '소유권이 없는 캐릭터입니다.' });
+
+        // 소지금액이 충분한지 확인
+        const change = char.money - item.price*count
+        if(change < 0)
+            return res.status(403).json({ message: '소지금이 부족합니다.' });
         
         // 인벤토리 아이템 유무 확인
-        const inventory = await prisma.inventory.findUnique({
+        const inventory = await prisma.inventory.findFirst({
             where: { 
                 itemId: +itemId,
-                userTag: +userTag
+                charId: +charId
             },
             select: {count: true}
         });
@@ -31,52 +50,119 @@ router.post('/buy/:itemId/:userTag', async (req, res, next) => {
             await prisma.inventory.create({
                 data: {
                     itemId: +itemId,
-                    userTag: +userTag,
-                    count: 1
+                    charId: +charId,
+                    count: count
                 },
             });
-
-            return res.status(201).json({ message: '성공적으로 구매했습니다.'});
+        } else {
+            // 인벤토리에 기존 아이템 개수 추가
+            await prisma.inventory.update({
+                where: {
+                    itemId_charId: {
+                        itemId: +itemId,
+                        charId: +charId
+                    }
+                },
+                data: {
+                    count: inventory.count + count
+                },
+            });
         }
-        // 인벤토리에 기존 아이템 개수 추가
-        const {count} = inventory
-        await prisma.inventory.update({
-            where: {itemId: +itemId},
+
+        // 소지금 업데이트
+        await prisma.characters.update({
+            where: {charId: +charId},
             data: {
-                itemId,
-                userId,
-                count: ++count
+                money: change
             },
         });
 
-        return res.status(201).json({ data: char, message: "성공적으로 구매했습니다."});
+
+        return res.status(201).json({ money: change, message: "성공적으로 구매했습니다."});
     } catch(error){
         next(error)
     }
 });
 
 /** 아이템 판매 API **/
-router.post('/sell/:itemId/:userTag', async (req, res, next) => {
+router.post('/sell/:charId', authMiddleware, async (req, res, next) => {
     try{
-        const { itemId } = req.params;
-        const validateBody = await validSchema.items.validateAsync(req.body)
-        const { name, stat} = validateBody;
-
+        const { charId } = req.params;
+        const { itemId, count} = req.body;
+        const { userTag } = req.user;
+        
+        // 아이템 존재 확인
         const item = await prisma.items.findUnique({
             where: { itemId: +itemId },
+            select: {price: true}
         });
-        if(item==null){
+        if(item==null)
             return res.status(404).json({ message: '존재하지 않는 아이템입니다.'});
-        }
 
-        await prisma.items.update({
-            data: {name, stat},
-            where: {
-                itemId: +itemId,
+        const char = await prisma.characters.findFirst({
+            where: { charId: +charId },
+            select: { 
+                userTag: true,
+                money: true 
             }
         });
+        if(char==null)
+            return res.status(404).json({ message: '존재하지 않는 캐릭터입니다.' });
+        if(char.userTag != userTag)
+            return res.status(404).json({ message: '소유권이 없는 캐릭터입니다.' });
+
+        // 판매 후 총 수익금
+        const netProfit = char.money + (item.price*count*0.6)<<0
         
-        return res.status(201).json({message: '정상적으로 수정되었습니다.'});
+        // 인벤토리 아이템 유무 확인
+        const inventory = await prisma.inventory.findFirst({
+            where: { 
+                itemId: +itemId,
+                charId: +charId
+            },
+            select: {count: true}
+        });
+        if(inventory==null)
+            return res.status(403).json({ message: '소지량이 부족합니다.' });
+
+        // 판매하려는 수만큼 소지한지 확인
+        if(inventory.count < count)
+            return res.status(403).json({ message: '소지량이 부족합니다.' });
+
+        if(inventory.count == count){
+            // 소지량이 0 이라면 삭제
+            await prisma.inventory.delete({
+                where: {
+                    itemId_charId: {
+                        itemId: +itemId,
+                        charId: +charId
+                    }
+                }
+            })
+        } else {
+            // 인벤토리에 기존 아이템 개수 차감
+            await prisma.inventory.update({
+                where: {
+                    itemId_charId: {
+                        itemId: +itemId,
+                        charId: +charId
+                    }
+                },
+                data: {
+                    count: inventory.count - count
+                },
+            });
+        }
+
+        // 소지금 업데이트
+        await prisma.characters.update({
+            where: {charId: +charId},
+            data: {
+                money: netProfit
+            },
+        });
+
+        return res.status(201).json({ money: netProfit, remain: (inventory.count - count), message: "성공적으로 판매했습니다."});
     } catch(error){
         next(error)
     }

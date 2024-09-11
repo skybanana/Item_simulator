@@ -18,4 +18,8 @@ export default {
             power: Joi.number().integer().min(0).max(1000)}).required(),
         price: Joi.number().integer().min(0).max(10000)
     }),
+    inventory : Joi.object({
+        itemId: Joi.number().integer().min(0).required(),
+        count: Joi.number().integer().min(0)
+    }),
 }
