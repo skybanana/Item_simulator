@@ -8,7 +8,7 @@ const router = express.Router();
 /** 아이템 구매 API **/
 router.post('/buy/:itemId/:userTag', async (req, res, next) => {
     try{
-        const { itemId, userTag } = req.params;
+        const { itemId, userTag } = req.body;
         
         // 아이템 존재 확인
         const item = await prisma.items.findUnique({
@@ -83,12 +83,34 @@ router.post('/sell/:itemId/:userTag', async (req, res, next) => {
 });
 
 /** 인벤토리 목록 조회 API **/
-router.get('/stash', async (req, res, next) => {
+router.get('/stash/:charId', authMiddleware, async (req, res, next) => {
     try{
+        const { charId } = req.params;
+        const { userTag } = req.user;
+        const char = await prisma.characters.findFirst({
+            where: {
+                charId: +charId,
+            },
+            select: {
+            userTag: true,
+            name: true,
+            health: true,
+            power: true,
+            money: true
+            },
+        });
+        if(char==null)
+            return res.status(404).json({ message: '존재하지 않는 캐릭터입니다.' });
+        if(char.userTag != userTag)
+            return res.status(401).json({ message: '소유권이 없는 캐릭터입니다.' });
+
         const inventory = await prisma.inventory.findMany({
+            where: {
+                charId: +charId,
+            },
             select: {
                 itemId: true,    
-                userTag: true,
+                charId: true,
                 count: true
             },
             orderBy:{

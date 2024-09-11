@@ -100,4 +100,32 @@ router.get('/chars/:charId', authMiddleware2, async (req, res, next) => {
     }
 });
 
+/** 돈 획득 API **/
+router.put('/earn/:charId', authMiddleware, async (req, res, next) => {
+    try{
+        const { charId } = req.params;
+        const { userTag } = req.user;
+        const char = await prisma.characters.findFirst({
+            where: { charId: +charId },
+            select: { 
+                userTag: true,
+                money: true 
+            }
+        });
+        if(char==null)
+            return res.status(404).json({ message: '존재하지 않는 캐릭터입니다.' });
+        if(char.userTag != userTag)
+            return res.status(404).json({ message: '소유권이 없는 캐릭터입니다.' });
+
+        await prisma.characters.update({
+            data: {money: char.money + 100},
+            where: { charId: +charId }
+        });
+
+        return res.status(201).json({ message : "소지금이 100원 증가했습니다." });
+    } catch(error){
+        next(error)
+    }
+});
+
 export default router;

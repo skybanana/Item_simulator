@@ -10,13 +10,19 @@ export default function (err, req, res, next) {
 
       switch(err.message.match(/(?<=\").+?(?=\")/)[0]){
         case 'userId':
-          errorMessage = "아이디의 형식이 일치하지 않습니다."
+          errorMessage = "아이디의 형식이 일치하지 않습니다. (영어 소문자 + 숫자)"
           break;
         case 'password':
           errorMessage = "패스워드 형식이 일치하지 않습니다. (6~40자리)"
           break;
         case 'name':
           errorMessage = "이름 형식이 일치하지 않습니다. (2~15자리 특수문자 포함불가)"
+          break;
+        case 'health':
+          errorMessage = "health 형식이 일치하지 않습니다. ( <1000)"
+          break;
+        case 'power':
+          errorMessage = "power 형식이 일치하지 않습니다. ( <1000)"
           break;
         case 'stat':
           errorMessage = "stat 형식이 일치하지 않습니다."
