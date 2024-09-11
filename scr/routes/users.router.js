@@ -60,7 +60,7 @@ router.post('/sign-in', async (req, res, next) => {
     // 로그인에 성공하면, 사용자의 userId를 바탕으로 토큰을 생성합니다.
     const token = jwt.sign(
       {
-        userId: user.userId,
+        userTag: user.userTag,
       },
       'custom-secret-key',
     );
