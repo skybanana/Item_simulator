@@ -13,8 +13,9 @@ export default {
     }),
     items : Joi.object({
         name: Joi.string().pattern(new RegExp('^[\\p{L}\\p{N}]{2,15}$','u')).required(),
-        health: Joi.number().integer().min(0).max(1000).required(),
-        power: Joi.number().integer().min(0).max(1000).required(),
-        price: Joi.number().integer().min(0).max(1000).required()
+        stat: Joi.object({
+            health: Joi.number().integer().min(0).max(1000),
+            power: Joi.number().integer().min(0).max(1000)}).required(),
+        price: Joi.number().integer().min(0).max(10000)
     }),
 }

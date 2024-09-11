@@ -16,7 +16,16 @@ export default function (err, req, res, next) {
           errorMessage = "패스워드 형식이 일치하지 않습니다. (6~40자리)"
           break;
         case 'name':
-          errorMessage = "이름 형식이 일치하지 않습니다. (특수문자 포함불가)"
+          errorMessage = "이름 형식이 일치하지 않습니다. (2~15자리 특수문자 포함불가)"
+          break;
+        case 'health':
+          errorMessage = "health 형식이 일치하지 않습니다. ( <1000)"
+          break;
+        case 'power':
+          errorMessage = "power 형식이 일치하지 않습니다. ( <1000)"
+          break;
+        case 'price':
+          errorMessage = "가격 형식이 일치하지 않습니다. ( <10,000)"
           break;
         default:
           errorMessage = "요청한 데이터 형식이 올바르지 않습니다."
