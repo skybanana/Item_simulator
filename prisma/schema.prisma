@@ -1,0 +1,42 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Users {
+  userTag    Int      @id @default(autoincrement()) @map("userTag")
+  userId     String   @unique @map("userId")
+  name      String   @map ("name")
+  password  String   @map("password")
+  createdAt DateTime @default(now()) @map("createdAt")
+
+  userInfos UserInfos? // 사용자(Users) 테이블과 사용자 정보(UserInfos) 테이블이 1:1 관계를 맺습니다.
+  posts     Posts[] // 사용자(Users) 테이블과 게시글(Posts) 테이블이 1:N 관계를 맺습니다.
+  comments  Comments[] // 사용자(Users) 테이블과 댓글(Comments) 테이블이 1:N 관계를 맺습니다.
+
+  @@map("Users")
+}
+
+model Posts {
+  postId    Int      @id @default(autoincrement()) @map("postId")
+  userId    Int      @map("userId") // 사용자(Users) 테이블을 참조하는 외래키
+  title     String   @map("title")
+  content   String   @map("content") @db.Text
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  // Users 테이블과 관계를 설정합니다.
+  user     Users     @relation(fields: [userTag], references: [userTag], onDelete: Cascade)
+  
+  @@map("Posts")
+}

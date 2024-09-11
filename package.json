@@ -1,0 +1,19 @@
+{
+  "name": "Item_simulator",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/skybanana/Item_simulator.git",
+  "author": "skybanana <112135946+skybanana@users.noreply.github.com>",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "@prisma/client": "^5.19.1",
+    "cookie-parser": "^1.4.6",
+    "express": "^4.20.0",
+    "jsonwebtoken": "^9.0.2",
+    "prisma": "^5.19.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
+}
