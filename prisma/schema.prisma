@@ -16,27 +16,64 @@ datasource db {
 model Users {
   userTag    Int      @id @default(autoincrement()) @map("userTag")
   userId     String   @unique @map("userId")
-  name      String   @map ("name")
-  password  String   @map("password")
-  createdAt DateTime @default(now()) @map("createdAt")
+  name       String   @unique @map ("name")
+  password   String   @map("password")
+  createdAt  DateTime @default(now()) @map("createdAt")
 
-  userInfos UserInfos? // 사용자(Users) 테이블과 사용자 정보(UserInfos) 테이블이 1:1 관계를 맺습니다.
-  posts     Posts[] // 사용자(Users) 테이블과 게시글(Posts) 테이블이 1:N 관계를 맺습니다.
-  comments  Comments[] // 사용자(Users) 테이블과 댓글(Comments) 테이블이 1:N 관계를 맺습니다.
+  characters Characters[] // 사용자(Users) 테이블과 캐릭터(Characters) 테이블이 1:N 관계를 맺습니다.
 
   @@map("Users")
 }
 
-model Posts {
-  postId    Int      @id @default(autoincrement()) @map("postId")
-  userId    Int      @map("userId") // 사용자(Users) 테이블을 참조하는 외래키
-  title     String   @map("title")
-  content   String   @map("content") @db.Text
-  createdAt DateTime @default(now()) @map("createdAt")
-  updatedAt DateTime @updatedAt @map("updatedAt")
+model Characters {
+  charId    Int       @id @default(autoincrement()) @map("charId")
+  userTag   Int       @map("userTag") // 사용자(Users) 테이블을 참조하는 외래키
+  name      String    @unique @map("name")
+  health    Int       @default(50) @map("health")
+  power     Int       @default(10) @map("power")
+  money     Int       @default(1000) @map("money")
+  createdAt DateTime  @default(now()) @map("createdAt")
 
-  // Users 테이블과 관계를 설정합니다.
   user     Users     @relation(fields: [userTag], references: [userTag], onDelete: Cascade)
-  
-  @@map("Posts")
+  inventory Inventory[]
+  gears Gears[]
+
+  @@map("Characters")
+}
+
+model Items {
+  itemId   Int        @id @default(autoincrement()) @map("itemId")
+  name     String     @unique @map("name")
+  health   Int        @default(0) @map("health")
+  power    Int        @default(0) @map("power")
+  price    Int        @default(50) @map("price")
+  createdAt DateTime  @default(now()) @map("createdAt")
+
+  inventory Inventory[]
+  gears Gears[]
+
+  @@map("Items")
+}
+
+model Inventory {
+  itemId   Int       @map("itemId")
+  charId   Int       @map("charId")
+  count    Int       @default(0) @map("count")
+
+  items      Items         @relation(fields: [itemId], references: [itemId], onDelete: Cascade)
+  characters Characters    @relation(fields: [charId], references: [charId], onDelete: Cascade)
+
+  @@unique([itemId, charId])
+  @@map("Inventory")
+}
+
+model Gears {
+  itemId   Int       @map("itemId")
+  charId   Int       @unique @map("charId")
+  equip    Boolean   @default(false) @map("equip")
+
+  items      Items         @relation(fields: [itemId], references: [itemId], onDelete: Cascade)
+  characters Characters    @relation(fields: [charId], references: [charId], onDelete: Cascade)
+
+  @@map("Gears")
 }
